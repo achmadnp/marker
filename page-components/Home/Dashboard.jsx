@@ -8,23 +8,8 @@ export const Dashboard = (props) => {
   // orga member
   // total project
 
-  const projects = [
-    {
-      pid: "pj-28",
-      name: "pName123",
-      memberCount: 3,
-    },
-    {
-      pid: "pj-2123",
-      name: "pName123",
-      memberCount: 3,
-    },
-    {
-      pid: "pj-2558",
-      name: "pName123",
-      memberCount: 3,
-    },
-  ];
+  const data = props.data;
+  const fields = props.fields;
 
   const logs = [
     {
@@ -44,7 +29,7 @@ export const Dashboard = (props) => {
   return (
     <div className="w-full">
       <NotePopup />
-      <ProjectOverview projects={projects} />
+      <ProjectOverview data={data} fields={fields} />
       <LatestLogs latestLogs={logs} />
     </div>
   );
