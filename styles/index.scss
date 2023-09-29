@@ -5,7 +5,11 @@
 @import "default/color_variable";
 @import "default/typography";
 
-@import "components/Modal.scss";
+@import "components/Modal";
+@import "components/Button";
+@import "components/Input";
+@import "components/Loader";
+@import "components/Checkbox";
 
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,
