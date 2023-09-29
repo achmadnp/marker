@@ -1,4 +1,4 @@
-import { Login } from "@/page-components/Auth/Login";
+import { Dashboard } from "@/page-components/Home/Dashboard";
 import Sidebar from "@/page-components/Sidebar/Sidebar";
 import { getSession } from "next-auth/react";
 import Router from "next/router";
@@ -14,7 +14,7 @@ export default function Home(props) {
   return (
     <div className="flex min-h-screen flex-nowrap">
       <Sidebar />
-      <div className="w-full">CONTENT</div>
+      <Dashboard />
     </div>
   );
 }
