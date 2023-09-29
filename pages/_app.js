@@ -12,7 +12,7 @@ function MyApp({ Component, pageProps }) {
           style: {
             border: "1px solid #713200",
             padding: "16px",
-            background: "rgba(163, 163, 163, 0.3)",
+            background: "white",
           },
         }}
       />
