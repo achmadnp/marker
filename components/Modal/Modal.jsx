@@ -1,15 +1,24 @@
 import { MdOutlineClose } from "react-icons/md";
 
-export const BasicModal = ({ children, shown, close, header, status }) => {
+export const BasicModal = ({
+  children,
+  shown,
+  close,
+  header,
+  status,
+  isUsingBackdrop = true,
+}) => {
   return shown ? (
     <div
       className="modal-backdrop"
       onClick={() => {
-        close();
+        if (isUsingBackdrop) {
+          close();
+        }
       }}
     >
       <div
-        className="relative min-w-[40%] min-h-[20rem] bg-white p-6 rounded-lg"
+        className="relative min-w-[40%] min-h-[20rem] bg-slate-300 p-6 rounded-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <button className="absolute right-5" onClick={() => close()}>
