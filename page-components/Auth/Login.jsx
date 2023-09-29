@@ -52,7 +52,6 @@ export const Login = (props) => {
     if (res?.error) {
       toast.remove();
       toast((e) => {
-        console.log(e);
         return <ErrorToast text={res.error} />;
       });
       return;

@@ -1,10 +1,10 @@
 import { BasicModal } from "@/components/Modal/Modal";
+import { usernameGenerator } from "@/lib/util/unameGen";
 import Image from "next/image";
 import Link from "next/link";
-import Router from "next/router";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { AiOutlineCheckCircle } from "react-icons/ai";
+import { BiRefresh } from "react-icons/bi";
 
 export const Register = (props) => {
   const [step, setStep] = useState(0);
@@ -15,17 +15,17 @@ export const Register = (props) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [organization, setOrganization] = useState("");
+  const [username, setUsername] = useState("");
   const [message, setMessage] = useState(null);
-
-  const [uname, setUname] = useState(null);
 
   const [passFocus, setPassFocus] = useState(false);
   const [passError, setPassError] = useState(null);
 
+  const [FNErr, setFnErr] = useState(null);
+
   const [confirmPassError, setConfirmPassError] = useState(null);
 
-  const [orgInfo, setOrgInfo] = useState(null);
+  const [registerData, setRegisterData] = useState(null);
 
   const signupUser = async (e) => {
     e.preventDefault();
@@ -34,8 +34,7 @@ export const Register = (props) => {
       email.length < 10 ||
       password.length < 6 ||
       confirmPassword.length < 6 ||
-      fullName.length < 4 ||
-      organization.length < 4
+      fullName.length < 4
     ) {
       toast.remove();
       toast.error("Some data does not meet the requirements", {
@@ -49,7 +48,7 @@ export const Register = (props) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password, fullName, organization }),
+      body: JSON.stringify({ email, password, fullName, username }),
     });
 
     let data = await res.json();
@@ -63,12 +62,20 @@ export const Register = (props) => {
     }
 
     setShowModal(true);
-    setUname(data.uname);
 
     if (data.message) {
+      setRegisterData(data);
       toast.success("Register success");
       setMessage(data.message);
     }
+  };
+
+  const regenerateUName = () => {
+    if (username == "" || fullName == "") {
+      setFnErr("Please fill in your fullname");
+      return;
+    }
+    setUsername(usernameGenerator(fullName));
   };
 
   const checkPassword = () => {
@@ -211,33 +218,43 @@ export const Register = (props) => {
                 onChange={(e) => {
                   setFullName(e.target.value);
                 }}
+                onFocus={(e) => {
+                  setFnErr(null);
+                }}
+                onBlur={(e) => {
+                  if (username == "" && fullName !== "") {
+                    setUsername(usernameGenerator(fullName));
+                  }
+                }}
                 className="w-full py-3 pl-3 mt-2 text-sm font-medium leading-none duration-500 bg-gray-200 border-b rounded text-slate-100 bg-slate-900/60 "
               />
+              {FNErr && (
+                <div className="text-sm font-semibold tracking-wide text-red-500">
+                  {FNErr}
+                </div>
+              )}
             </div>
             <div className="mb-2">
               <label className="font-medium leading-none text-slate-50">
-                Organisation ID
+                Username
               </label>
-              <input
-                role="input"
-                type="text"
-                value={organization}
-                onChange={(e) => {
-                  setOrganization(e.target.value);
-                }}
-                onFocus={(e) => {
-                  setOrgInfo("consists characters and digits");
-                }}
-                onBlur={(e) => {
-                  setOrgInfo(null);
-                }}
-                className="w-full py-3 pl-3 mt-2 text-sm font-medium leading-none duration-500 bg-gray-200 border-b rounded bg-slate-900/60 text-slate-100"
-              />
-              {orgInfo && (
-                <div className="mt-1 text-xs font-semibold tracking-wide sm:text-sm text-slate-300">
-                  {orgInfo}
-                </div>
-              )}
+
+              <div className="relative flex items-center ">
+                <button
+                  className="absolute right-5 focus:outline-none"
+                  onClick={regenerateUName}
+                >
+                  <BiRefresh size={"20px"} />
+                </button>
+
+                <input
+                  role="input"
+                  type="text"
+                  disabled
+                  value={username}
+                  className="block w-full py-3 pl-3 mt-2 text-sm font-medium leading-none duration-500 bg-gray-200 border-b rounded hover:cursor-not-allowed bg-slate-900/60 text-slate-100"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -302,7 +319,9 @@ export const Register = (props) => {
         <div className="mt-4 text-center text-slate-700">
           Registration completed successfully.
           <div>Your Username is:</div>
-          <div className="my-2 text-lg font-semibold">{uname}</div>
+          <div className="my-2 text-lg font-semibold">
+            {registerData?.uname}
+          </div>
           <div>You need this information to login.</div>
           <div className="mt-4 ">
             <Link
