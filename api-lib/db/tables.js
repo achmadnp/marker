@@ -120,6 +120,8 @@ export async function deleteField({ fieldId }) {
         }
       }
     );
+
+    return removedField;
   } catch (error) {
     throw new Error(`process aborted ${error}`);
   }
