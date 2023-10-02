@@ -20,9 +20,12 @@ import {
   Progress,
   SelectPicker,
   Tooltip,
+  EditableCell,
   Whisper,
+  Table,
+  Input,
 } from "rsuite";
-import { Cell } from "rsuite-table";
+import { Cell, HeaderCell } from "rsuite-table";
 import CollaspedOutlineIcon from "@rsuite/icons/CollaspedOutline";
 import ExpandOutlineIcon from "@rsuite/icons/ExpandOutline";
 import PageIcon from "@rsuite/icons/Page";
@@ -43,7 +46,7 @@ export const BaseCell = forwardRef((props, ref) => {
   );
 });
 
-export const InputCell = memo(
+export const InputCell1 = memo(
   ({ rowData, data, value, onChange, ...props }) => {
     const handleChange = (e) => {
       onChange(rowData.id, e.target.value);
@@ -66,6 +69,24 @@ export const InputCell = memo(
     );
   }
 );
+
+export const InputCell = ({
+  rowData,
+  dataKey,
+  comments,
+  onChange,
+  ...props
+}) => {
+  const value = rowData && comments ? comments[rowData.id - 1][dataKey] : "";
+  return (
+    <Table.Cell {...props} style={{ padding: "6px" }}>
+      <Input
+        value={value}
+        onChange={(value) => onChange(value, dataKey, rowData.id)}
+      />
+    </Table.Cell>
+  );
+};
 
 export const ImageCell = ({ rowData, dataKey, ...props }) => (
   <Cell {...props}>
@@ -351,7 +372,7 @@ export const DropdownCell = ({
   const ref = useRef();
 
   return (
-    <Cell {...props} name={name} className="link-group">
+    <Cell {...props} name={name} className="">
       <Whisper
         ref={ref}
         placement="autoVerticalStart"
@@ -372,8 +393,8 @@ export const DropdownCell = ({
           </Popover>
         }
       >
-        <Button color={rowData.pStatus.color} appearance="ghost">
-          {rowData.pStatus.name}
+        <Button color={rowData.pStatusColor} appearance="ghost">
+          {rowData.pStatus}
         </Button>
       </Whisper>
     </Cell>
