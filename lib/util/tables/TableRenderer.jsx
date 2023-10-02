@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import {
   Button,
   Dropdown,
@@ -10,7 +10,6 @@ import {
 } from "rsuite";
 const { Column, HeaderCell, Cell } = Table;
 import "rsuite/dist/rsuite.css";
-import ColumnRenderer from "./ColumnRenderer";
 import PlusIcon from "@rsuite/icons/Plus";
 import {
   AsigneeCell,
@@ -22,23 +21,26 @@ import {
   InputCell,
   ProgressCell,
   SingleAsignee,
-} from "@/components/Tables/Cells";
+} from "@/components/Table/Cells";
 import Link from "next/link";
 import ExpandedRenderer from "./ExpandedRenderer";
+import { handleColumnHeaderEdit } from "../functions/tables/tables";
 
 const TableRenderer = ({ data, fields }) => {
   data.map((el, i) => {
     el.no = i;
   });
+
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRef, setEditRef] = useState();
   const [columns, setColumns] = useState(fields);
-  const [expandable, setExpandable] = useState();
   const [expandedRowKey, setExpandedRowKeys] = useState([]);
   const [rowKey, setRowKey] = useState("no");
-  // const rowKey = "no";
+  const headerRef = useRef();
 
-  // TODO: GET all users database with its role
+  // TODO: GET all users database with its role (maybe with swr?)
   const users = [
     {
       avatar: "https://avatars.githubusercontent.com/u/12592949",
@@ -157,14 +159,22 @@ const TableRenderer = ({ data, fields }) => {
         >
           <HeaderCell className="px-8" style={{ fontSize: 20 }}>
             <div className="m-auto">{field.headerName}</div>
-            <div className="absolute right-0 h-1 -top-1">
+            <div className="absolute top-0 right-0 h-1">
               <Whisper
+                ref={headerRef}
                 trigger={"click"}
                 placement="bottom"
                 speaker={
-                  <Popover>
+                  <Popover ref={headerRef}>
                     <Dropdown.Menu>
-                      <Dropdown.Item style={{ color: "blue" }}>
+                      <Dropdown.Item
+                        style={{ color: "blue" }}
+                        onClick={() => {
+                          setEditRef(field);
+                          setEditOpen(true);
+                          headerRef.current.close();
+                        }}
+                      >
                         Edit Header Label
                       </Dropdown.Item>
                       <Dropdown.Item style={{ color: "red" }}>
@@ -197,6 +207,33 @@ const TableRenderer = ({ data, fields }) => {
     });
   };
 
+  const handleHeaderEdit = async ({ hId, hName }) => {
+    setEditRef();
+    setLoading(true);
+    setEditOpen(false);
+    const res = await handleColumnHeaderEdit(hId, hName);
+    const colArr = [];
+    console.log(columns);
+
+    if (res.status === "success") {
+      for (const key in columns) {
+        if (columns.hasOwnProperty(key)) {
+          const index = parseInt(key);
+          colArr[index] = columns[key];
+        }
+      }
+
+      console.log(colArr);
+
+      const found = colArr.findIndex((e) => e._id === hId);
+      colArr[found].headerName = hName;
+      setColumns(colArr);
+    } else {
+      // popup modal
+    }
+    setLoading(false);
+  };
+
   const handleCreateColumn = async (props) => {
     setLoading(true);
     setOpenModal(false);
@@ -221,8 +258,6 @@ const TableRenderer = ({ data, fields }) => {
       }
 
       const data = await res.json();
-
-      console.log(`data ${data}`);
     } catch (error) {
       console.log(`error creating column`);
     }
@@ -327,6 +362,12 @@ const TableRenderer = ({ data, fields }) => {
         open={openModal}
         onClose={setOpenModal}
         handleCreate={handleCreateColumn}
+      />
+      <EditModal
+        open={editOpen}
+        refField={editRef}
+        onClose={setEditOpen}
+        handleEdit={handleHeaderEdit}
       />
     </div>
   );
@@ -509,13 +550,62 @@ const NewColModal = ({ open, onClose: isOpen, handleCreate }) => {
   );
 };
 
+const EditModal = ({ open, onClose: isOpen, refField, handleEdit }) => {
+  const [header, setHeader] = useState(refField?.headerName || "");
+
+  useEffect(() => {
+    if (open) {
+      setHeader(refField.headerName);
+    }
+  }, []);
+
+  return (
+    <>
+      <Modal backdrop="static" open={open} onClose={() => isOpen(false)}>
+        <Modal.Header>
+          <Modal.Title>Edit Column Header</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="flex mt-4 space-x-4">
+            <div className="m-2 text-lg">Header name: </div>
+            <div className="mt-1">
+              <input
+                onChange={(e) => setHeader(e.target.value)}
+                value={header}
+                className={`p-2 min-h-[24px]  rounded-md bg-blue-100 border border-blue-600`}
+              />
+            </div>
+          </div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            onClick={() => {
+              handleEdit({
+                hId: refField._id,
+                hName: header,
+              });
+              setHeader("");
+            }}
+            appearance="primary"
+          >
+            Proceed
+          </Button>
+          <Button onClick={() => isOpen(false)} appearance="subtle">
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
+
 const ActionCell = ({ rowData, dataKey, onClick, ...props }) => {
   return (
     <Cell {...props} style={{ padding: "6px" }}>
       <Button
         appearance="link"
         onClick={() => {
-          console.log(rowData);
           onClick(rowData.id);
         }}
       >
