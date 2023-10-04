@@ -24,7 +24,10 @@ import {
 } from "@/components/Table/Cells";
 import Link from "next/link";
 import ExpandedRenderer from "./ExpandedRenderer";
-import { handleColumnHeaderEdit } from "../functions/tables/tables";
+import {
+  handleColumnDelete,
+  handleColumnHeaderEdit,
+} from "../functions/tables/tables";
 
 const TableRenderer = ({ data, fields }) => {
   data.map((el, i) => {
@@ -34,6 +37,10 @@ const TableRenderer = ({ data, fields }) => {
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [confOpen, setConfOpen] = useState(false);
+  const [confText, setConfText] = useState("");
+  const [confHeader, setConfHeader] = useState("");
+  const [confFunc, setConfFunc] = useState(() => () => {});
   const [editRef, setEditRef] = useState();
   const [columns, setColumns] = useState(fields);
   const [expandedRowKey, setExpandedRowKeys] = useState([]);
@@ -184,7 +191,38 @@ const TableRenderer = ({ data, fields }) => {
                       <Dropdown.Item style={{ color: "orange" }}>
                         Edit Permission
                       </Dropdown.Item>
-                      <Dropdown.Item style={{ color: "red" }} color="red">
+                      <Dropdown.Item
+                        style={{ color: "red" }}
+                        color="red"
+                        onClick={() => {
+                          setConfHeader("Delete Column");
+                          setConfText(
+                            "Deleting a column will remove all corresponding data. Do you want to Proceed?"
+                          );
+
+                          const deleteCol = async () => {
+                            const colArr = [];
+                            const res = await handleColumnDelete(field._id);
+                            if (res.status === "success") {
+                              for (const key in columns) {
+                                if (columns.hasOwnProperty(key)) {
+                                  const index = parseInt(key);
+                                  colArr[index] = columns[key];
+
+                                  const found = colArr.findIndex(
+                                    (e) => e._id === hId
+                                  );
+                                  delete colArr[found];
+                                  setColumns(collArr);
+                                }
+                              }
+                            }
+                            console.log("client gets executed");
+                          };
+                          setConfFunc(() => deleteCol);
+                          setConfOpen(true);
+                        }}
+                      >
                         Delete Column
                       </Dropdown.Item>
                     </Dropdown.Menu>
@@ -223,8 +261,6 @@ const TableRenderer = ({ data, fields }) => {
         }
       }
 
-      console.log(colArr);
-
       const found = colArr.findIndex((e) => e._id === hId);
       colArr[found].headerName = hName;
       setColumns(colArr);
@@ -239,7 +275,7 @@ const TableRenderer = ({ data, fields }) => {
     setOpenModal(false);
 
     try {
-      const res = await fetch(`../api/tables/fields`, {
+      const res = await fetch(`../api/tables/field`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -273,13 +309,13 @@ const TableRenderer = ({ data, fields }) => {
       },
     ]);
     setOpenModal(false);
+    setLoading(false);
   };
 
   const handleColEdit = async (id) => {
     const nextData = Object.assign([], data);
     const activeItem = nextData.find((item) => item.id === id);
     activeItem.status = activeItem.status ? null : "EDIT";
-    console.log(nextData);
   };
 
   const handleExpanded = (rowData, dataKey) => {
@@ -368,6 +404,13 @@ const TableRenderer = ({ data, fields }) => {
         refField={editRef}
         onClose={setEditOpen}
         handleEdit={handleHeaderEdit}
+      />
+      <ConfirmationPopup
+        open={confOpen}
+        header={confHeader || ""}
+        text={confText || ""}
+        onClose={setConfOpen}
+        execFunc={confFunc}
       />
     </div>
   );
@@ -590,6 +633,48 @@ const EditModal = ({ open, onClose: isOpen, refField, handleEdit }) => {
             appearance="primary"
           >
             Proceed
+          </Button>
+          <Button onClick={() => isOpen(false)} appearance="subtle">
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+};
+
+const ConfirmationPopup = ({
+  open,
+  header,
+  text,
+  onClose: isOpen,
+  execFunc,
+}) => {
+  if (!open) {
+    return;
+  }
+
+  return (
+    <>
+      <Modal backdrop="static" open={open} onClose={() => isOpen(false)}>
+        <Modal.Header>
+          <Modal.Title>{header}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="flex mt-4 space-x-4">
+            <div className="m-2 text-lg">{text}</div>
+          </div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            onClick={() => {
+              execFunc();
+              isOpen(false);
+            }}
+            appearance="primary"
+          >
+            Confirm
           </Button>
           <Button onClick={() => isOpen(false)} appearance="subtle">
             Cancel
