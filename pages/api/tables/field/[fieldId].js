@@ -30,8 +30,8 @@ export default nextConnect(ncOpts)
     }
   })
   .delete(async (req, res) => {
-    const deleted = await deleteField({ fieldId: req.body.fieldId });
-
+    const deleted = await deleteField({ fieldId: req.query.fieldId });
+    console.log(`deleted, ${deleted}`);
     if (deleted.length != 0) {
       return res.status(200).json({
         operation: "DELETE",
@@ -42,7 +42,7 @@ export default nextConnect(ncOpts)
     } else {
       const err = "data does not exists or access not allowed";
       return res.status(400).json({
-        operation: "PUT",
+        operation: "DELETE",
         status: "failed",
         message: `operation failed: ${err}`,
       });
