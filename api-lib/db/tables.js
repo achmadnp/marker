@@ -111,15 +111,24 @@ export async function editHeader({ fieldId, hname }) {
 export async function emptyFieldData({ fieldId }) {
   await dbConnect();
   let datakey;
-  let updateQuery;
 
   try {
     const field = await TableField.findById(fieldId);
-    datakey = field._dataKey;
+    console.log(field.dataKey);
+    datakey = field.dataKey;
+    const update = { $set: {} };
+    update.$set[datakey] = null;
 
-    updateQuery[datakey] = null;
+    const empty = await Data.updateMany(
+      {
+        [datakey]: { $exists: true },
+      },
+      update
+    );
 
-    const empty = await Data.updateMany({}, { $set: updateQuery });
+    console.log(`empty: , ${empty}`);
+
+    return empty;
   } catch (error) {
     throw new Error(`process aborted ${error}`);
   }
