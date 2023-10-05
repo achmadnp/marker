@@ -144,21 +144,18 @@ export async function deleteField({ fieldId }) {
         [datakey]: { $exists: true }, // find the documents where the field exists });
       },
       deleteQuery
-      // (err, result) => {
-      //   if (err) {
-      //     console.error(err);
-      //   } else if (result.nModified > 0) {
-      //     console.log(
-      //       `Field '${datakey}' deleted from ${result.nModified} documents.`
-      //     );
-      //   } else {
-      //     console.log(`Field '${datakey}' not found in any documents.`);
-      //   }
-      // }
     );
     console.log(`removedField, ${removedField}`);
 
-    return removedField;
+    const removeFieldFromTable = await TableSchema.findOneAndUpdate(
+      { tablefields: { $elemMatch: { _id: fieldId } } },
+      { $pull: { tablefields: { _id: fieldId } } },
+      { new: true }
+    );
+
+    console.log(removeFieldFromTable);
+
+    return { removedField, removeFieldFromTable };
   } catch (error) {
     throw new Error(`process aborted ${error}`);
   }
