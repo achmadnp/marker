@@ -54,6 +54,42 @@ export async function getTableData({ limit = 50 }) {
   return data;
 }
 
+export async function createColumn({ tableId, column }) {
+  await dbConnect();
+  let fieldId;
+
+  try {
+    const colField = await new TableField({
+      headerName: column.headerName,
+      dataKey: column.dataKey,
+      cellType: column.cellType,
+      resizeable: column?.resizeable || false,
+      cellName: column.cellName,
+      editableCol: column?.editableCol || true,
+    }).save();
+
+    console.log(`col: `, colField);
+    fieldId = colField._id;
+
+    console.log(`getting field Id ${fieldId} and saving table ref`);
+
+    const tableField = await TableSchema.findOneAndUpdate(
+      { _id: tableId },
+      { $push: { tablefields: fieldId } },
+      { upsert: false }
+    );
+
+    if (tableField) {
+      console.log(`Tfield: ${tableField}`);
+      return tableField;
+    } else {
+      throw new Error("Error: table and/or field cannot be created");
+    }
+  } catch (error) {
+    throw new Error(`Error: ${error}`);
+  }
+}
+
 export async function editHeader({ fieldId, hname }) {
   await dbConnect();
 
