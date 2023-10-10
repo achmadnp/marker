@@ -3,6 +3,7 @@ import TableSchema from "@/lib/model/Tables/ProjectTableModel";
 import TableField from "@/lib/model/Tables/TableFieldSchema";
 import Data from "@/lib/model/Data/DataModel";
 import ddPool from "@/lib/model/Data/ddPoolModel";
+var mongoose = require("mongoose");
 
 export async function getTableFields() {
   await dbConnect();
@@ -54,24 +55,21 @@ export async function getTableData({ limit = 50 }) {
   return data;
 }
 
-export async function createColumn({ tableId, column }) {
+export async function createColumn({ tableId, fields }) {
   await dbConnect();
   let fieldId;
+  console.log(fields?.editableCol);
 
   try {
     const colField = await new TableField({
-      headerName: column.headerName,
-      dataKey: column.dataKey,
-      cellType: column.cellType,
-      resizeable: column?.resizeable || false,
-      cellName: column.cellName,
-      editableCol: column?.editableCol || true,
+      headerName: fields.headerName,
+      dataKey: fields.dataKey,
+      cellType: fields.cellType,
+      resizeable: fields?.resizeable || false,
+      cellName: fields.cellName,
+      editableCol: fields?.editableCol || true,
     }).save();
-
-    console.log(`col: `, colField);
     fieldId = colField._id;
-
-    console.log(`getting field Id ${fieldId} and saving table ref`);
 
     const tableField = await TableSchema.findOneAndUpdate(
       { _id: tableId },
@@ -80,8 +78,7 @@ export async function createColumn({ tableId, column }) {
     );
 
     if (tableField) {
-      console.log(`Tfield: ${tableField}`);
-      return tableField;
+      return { tableField, colField };
     } else {
       throw new Error("Error: table and/or field cannot be created");
     }
@@ -114,7 +111,6 @@ export async function emptyFieldData({ fieldId }) {
 
   try {
     const field = await TableField.findById(fieldId);
-    console.log(field.dataKey);
     datakey = field.dataKey;
     const update = { $set: {} };
     update.$set[datakey] = null;
@@ -126,8 +122,6 @@ export async function emptyFieldData({ fieldId }) {
       update
     );
 
-    console.log(`empty: , ${empty}`);
-
     return empty;
   } catch (error) {
     throw new Error(`process aborted ${error}`);
@@ -136,14 +130,13 @@ export async function emptyFieldData({ fieldId }) {
 
 export async function changePermission({ fieldId }) {}
 
-export async function deleteField({ fieldId }) {
+export async function deleteField({ tableId, fieldId }) {
   await dbConnect();
   let datakey;
   let updateQuery;
 
   try {
     const deleted = await TableField.findOneAndDelete({ _id: fieldId });
-    console.log(deleted.dataKey);
     datakey = deleted.dataKey;
     const deleteQuery = { $unset: {} };
     deleteQuery.$unset[datakey] = 1;
@@ -154,15 +147,14 @@ export async function deleteField({ fieldId }) {
       },
       deleteQuery
     );
-    console.log(`removedField, ${removedField}`);
+
+    const fid = new mongoose.Types.ObjectId(fieldId);
 
     const removeFieldFromTable = await TableSchema.findOneAndUpdate(
-      { tablefields: { $elemMatch: { _id: fieldId } } },
-      { $pull: { tablefields: { _id: fieldId } } },
+      { tablefields: { $elemMatch: { $eq: fid } } },
+      { $pull: { tablefields: fid } },
       { new: true }
     );
-
-    console.log(removeFieldFromTable);
 
     return { removedField, removeFieldFromTable };
   } catch (error) {
@@ -171,3 +163,31 @@ export async function deleteField({ fieldId }) {
 }
 
 export async function appendColumn({ properties, creatorId }) {}
+
+export async function createExpanded({ pid }) {
+  await dbConnect();
+
+  try {
+    const table = await new TableSchema({
+      tablefields: [],
+      data: [],
+    }).save();
+
+    // get table _id
+    const tableId = table._id;
+    // insert table _id into data table with name 'expRef'
+    const update = { $set: {} };
+    update.$set["expRef"] = tableId;
+    // save the new data table
+    const data = await new Data(update).save();
+
+    console.log(`data: ${data}`);
+    if (table) {
+      return table;
+    } else {
+      throw new Error("Error: expandable cannot be created");
+    }
+  } catch (error) {
+    throw new Error(`Error: ${error}`);
+  }
+}
