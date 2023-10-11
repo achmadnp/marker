@@ -30,7 +30,10 @@ export default nextConnect(ncOpts)
     }
   })
   .delete(async (req, res) => {
-    const deleted = await deleteField({ fieldId: req.query.fieldId });
+    const deleted = await deleteField({
+      tableId: `64f63fbc2dcbb4e3ad750230`,
+      fieldId: req.query.fieldId,
+    });
     console.log(`deleted, ${deleted}`);
     if (deleted.length != 0) {
       return res.status(200).json({
