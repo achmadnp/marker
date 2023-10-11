@@ -28,118 +28,166 @@ import {
   handleColumnDelete,
   handleColumnHeaderEdit,
 } from "../functions/tables/tables";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
-const TableRenderer = ({ data, fields }) => {
-  data.map((el, i) => {
-    el.no = i;
-  });
+const TableRenderer = (props) => {
+  const {
+    data: tableData,
+    error: errData,
+    isLoading: loadingData,
+  } = useSWR(`/api/activity`, fetcher);
 
-  const [loading, setLoading] = useState(false);
+  const {
+    data: tableFields,
+    error: errFields,
+    isLoading: loadingFields,
+  } = useSWR(`/api/tables/field`, fetcher);
+
+  const [loading, setLoading] = useState(loadingData || loadingFields);
   const [openModal, setOpenModal] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confOpen, setConfOpen] = useState(false);
   const [confText, setConfText] = useState("");
   const [confHeader, setConfHeader] = useState("");
   const [confFunc, setConfFunc] = useState(() => () => {});
+  const [conf, setConf] = useState({
+    open: false,
+    text: "",
+    header: "",
+    func: () => () => {},
+  });
+
   const [editRef, setEditRef] = useState();
-  const [columns, setColumns] = useState(fields);
+  const [columns, setColumns] = useState(null);
   const [expandedRowKey, setExpandedRowKeys] = useState([]);
   const [rowKey, setRowKey] = useState("no");
   const headerRef = useRef();
 
-  // TODO: GET all users database with its role (maybe with swr?)
-  const users = [
-    {
-      avatar: "https://avatars.githubusercontent.com/u/12592949",
-      name: "superman66",
-      id: "64f9aad96c8827625dc6493e",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/8225666",
-      name: "SevenOutman",
-      id: "64f9aaf26c8827625dc6493f",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/15609339",
-      name: "hiyangguo",
-      id: "64f9ab666c8827625dc64940",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/14308293",
-      name: "MarvelSQ",
-      id: "64f9ab6f6c8827625dc64941",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/1203827",
-      name: "simonguo",
-      id: "64f9ab756c8827625dc64942",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/9625224",
-      name: "theJian",
-      id: "64f9abdb6c8827625dc64943",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/15884443",
-      name: "LeightonYao",
-      id: "64f9abe56c8827625dc64944",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/10924138",
-      name: "zmhawk",
-      id: "personId-BV890KI",
-      id: "64f9abeb6c8827625dc64945",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/2797600",
-      name: "posebear1990",
-      id: "personId-GO3LU7i",
-      id: "64f9abf36c8827625dc64946",
-    },
-    {
-      avatar: "https://avatars.githubusercontent.com/u/23637144",
-      name: "Sleaf",
-      id: "64f9abfa6c8827625dc64947",
-    },
-  ];
+  if (errData || errFields) {
+    return <div>ERROR</div>;
+  }
 
-  // TODO: GET dropdown data
-  const ddData = data.map((data, i) => {
-    return {
-      name: data.pStatus,
-      color: data.pStatusColor,
-    };
-  });
+  const retCol = tableFields;
 
-  const renderColumns = () => {
-    return columns.map((field, index) => {
-      const cellType = {
-        base: (
-          <Cell
-            className="table-cell hover:text-blue-500"
-            dataKey={field.dataKey}
-          ></Cell>
-        ),
-        input: "",
-        datepick: "",
-        daterange: <DTRangeCell dataKey={field.dataKey} />,
-        singleUser: "",
-        multipleAsignee: (
-          <AsigneeCell name={"pPIC"} dataKey="pPIC" data={users} />
-        ),
-        dropdown: (
-          <DropdownCell
-            dataKey={field.dataKey}
-            name={field.cellName}
-            data={ddData}
-            onChange={() => {}}
-          />
-        ),
-        progress: <ProgressCell />,
-      };
-      const cellToRender = cellType[field.cellType] || cellType["base"];
+  if (tableData && tableFields) {
+    tableData.data?.map((el, i) => {
+      el.no = i;
+    });
 
-      if (!field.editableCol) {
+    // TODO: GET all users database with its role (maybe with swr?)
+    const users = [
+      {
+        avatar: "https://avatars.githubusercontent.com/u/12592949",
+        name: "superman66",
+        id: "64f9aad96c8827625dc6493e",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/8225666",
+        name: "SevenOutman",
+        id: "64f9aaf26c8827625dc6493f",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/15609339",
+        name: "hiyangguo",
+        id: "64f9ab666c8827625dc64940",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/14308293",
+        name: "MarvelSQ",
+        id: "64f9ab6f6c8827625dc64941",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/1203827",
+        name: "simonguo",
+        id: "64f9ab756c8827625dc64942",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/9625224",
+        name: "theJian",
+        id: "64f9abdb6c8827625dc64943",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/15884443",
+        name: "LeightonYao",
+        id: "64f9abe56c8827625dc64944",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/10924138",
+        name: "zmhawk",
+        id: "personId-BV890KI",
+        id: "64f9abeb6c8827625dc64945",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/2797600",
+        name: "posebear1990",
+        id: "personId-GO3LU7i",
+        id: "64f9abf36c8827625dc64946",
+      },
+      {
+        avatar: "https://avatars.githubusercontent.com/u/23637144",
+        name: "Sleaf",
+        id: "64f9abfa6c8827625dc64947",
+      },
+    ];
+
+    // TODO: GET dropdown data
+    const renderColumns = () => {
+      const ddData = tableData.data.map((d, i) => {
+        return {
+          name: d.pStatus,
+          color: d.pStatusColor,
+        };
+      });
+
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+
+      return retCol.fields.map((field, index) => {
+        const cellType = {
+          base: (
+            <Cell
+              className="table-cell hover:text-blue-500"
+              dataKey={field.dataKey}
+            ></Cell>
+          ),
+          input: "",
+          datepick: "",
+          daterange: <DTRangeCell dataKey={field.dataKey} />,
+          singleUser: "",
+          multipleAsignee: (
+            <AsigneeCell name={"pPIC"} dataKey="pPIC" data={users} />
+          ),
+          dropdown: (
+            <DropdownCell
+              dataKey={field.dataKey}
+              name={field.cellName}
+              data={ddData}
+              onChange={() => {}}
+            />
+          ),
+          progress: <ProgressCell />,
+        };
+        const cellToRender = cellType[field.cellType] || cellType["base"];
+
+        if (!field.editableCol) {
+          return (
+            <Column
+              key={index}
+              width={300}
+              align="center"
+              flexGrow={1}
+              fixed={field.resizeable ? false : "left"}
+            >
+              <HeaderCell className="px-8 " style={{ fontSize: 20 }}>
+                {field.headerName}
+              </HeaderCell>
+              {cellToRender}
+            </Column>
+          );
+        }
+
         return (
           <Column
             key={index}
@@ -148,272 +196,261 @@ const TableRenderer = ({ data, fields }) => {
             flexGrow={1}
             fixed={field.resizeable ? false : "left"}
           >
-            <HeaderCell className="px-8 " style={{ fontSize: 20 }}>
-              {field.headerName}
+            <HeaderCell className="px-8" style={{ fontSize: 20 }}>
+              <div className="m-auto">{field.headerName}</div>
+              <div className="absolute top-0 right-0 h-1">
+                <Whisper
+                  ref={headerRef}
+                  trigger={"click"}
+                  placement="bottom"
+                  speaker={
+                    <Popover ref={headerRef}>
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          style={{ color: "blue" }}
+                          onClick={() => {
+                            setEditRef(field);
+                            setEditOpen(true);
+                            headerRef.current.close();
+                          }}
+                        >
+                          Edit Header Label
+                        </Dropdown.Item>
+                        <Dropdown.Item style={{ color: "red" }}>
+                          Empty Column Data
+                        </Dropdown.Item>
+                        <Dropdown.Separator />
+                        <Dropdown.Item style={{ color: "orange" }}>
+                          Edit Permission
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          style={{ color: "red" }}
+                          color="red"
+                          onClick={() => {
+                            setConfHeader("Delete Column");
+                            setConfText(
+                              "Deleting a column will remove all corresponding data. Do you want to Proceed?"
+                            );
+
+                            const deleteCol = async () => {
+                              const colArr = [];
+                              const res = await handleColumnDelete(field._id);
+                              if (res.status === "success") {
+                                for (const key in columns) {
+                                  if (columns.hasOwnProperty(key)) {
+                                    const index = parseInt(key);
+                                    colArr[index] = columns[key];
+
+                                    const found = colArr.findIndex(
+                                      (e) => e._id === field._id
+                                    );
+                                    delete colArr[found];
+                                    setColumns(colArr);
+                                  }
+                                }
+                              }
+                              console.log("client gets executed");
+                            };
+                            setConfFunc(() => deleteCol);
+                            setConfOpen(true);
+                          }}
+                        >
+                          Delete Column
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Popover>
+                  }
+                >
+                  <Button
+                    style={{ height: "18px" }}
+                    color="blue"
+                    appearance="subtle"
+                  >
+                    ...
+                  </Button>
+                </Whisper>
+              </div>
             </HeaderCell>
             {cellToRender}
           </Column>
         );
-      }
+      });
+    };
 
-      return (
-        <Column
-          key={index}
-          width={300}
-          align="center"
-          flexGrow={1}
-          fixed={field.resizeable ? false : "left"}
-        >
-          <HeaderCell className="px-8" style={{ fontSize: 20 }}>
-            <div className="m-auto">{field.headerName}</div>
-            <div className="absolute top-0 right-0 h-1">
-              <Whisper
-                ref={headerRef}
-                trigger={"click"}
-                placement="bottom"
-                speaker={
-                  <Popover ref={headerRef}>
-                    <Dropdown.Menu>
-                      <Dropdown.Item
-                        style={{ color: "blue" }}
-                        onClick={() => {
-                          setEditRef(field);
-                          setEditOpen(true);
-                          headerRef.current.close();
-                        }}
-                      >
-                        Edit Header Label
-                      </Dropdown.Item>
-                      <Dropdown.Item style={{ color: "red" }}>
-                        Empty Column Data
-                      </Dropdown.Item>
-                      <Dropdown.Separator />
-                      <Dropdown.Item style={{ color: "orange" }}>
-                        Edit Permission
-                      </Dropdown.Item>
-                      <Dropdown.Item
-                        style={{ color: "red" }}
-                        color="red"
-                        onClick={() => {
-                          setConfHeader("Delete Column");
-                          setConfText(
-                            "Deleting a column will remove all corresponding data. Do you want to Proceed?"
-                          );
+    const handleHeaderEdit = async ({ hId, hName }) => {
+      setEditRef();
+      setLoading(true);
+      setEditOpen(false);
+      const res = await handleColumnHeaderEdit(hId, hName);
+      const colArr = [];
+      console.log(columns);
 
-                          const deleteCol = async () => {
-                            const colArr = [];
-                            const res = await handleColumnDelete(field._id);
-                            if (res.status === "success") {
-                              for (const key in columns) {
-                                if (columns.hasOwnProperty(key)) {
-                                  const index = parseInt(key);
-                                  colArr[index] = columns[key];
-
-                                  const found = colArr.findIndex(
-                                    (e) => e._id === hId
-                                  );
-                                  delete colArr[found];
-                                  setColumns(collArr);
-                                }
-                              }
-                            }
-                            console.log("client gets executed");
-                          };
-                          setConfFunc(() => deleteCol);
-                          setConfOpen(true);
-                        }}
-                      >
-                        Delete Column
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Popover>
-                }
-              >
-                <Button
-                  style={{ height: "18px" }}
-                  color="blue"
-                  appearance="subtle"
-                >
-                  ...
-                </Button>
-              </Whisper>
-            </div>
-          </HeaderCell>
-          {cellToRender}
-        </Column>
-      );
-    });
-  };
-
-  const handleHeaderEdit = async ({ hId, hName }) => {
-    setEditRef();
-    setLoading(true);
-    setEditOpen(false);
-    const res = await handleColumnHeaderEdit(hId, hName);
-    const colArr = [];
-    console.log(columns);
-
-    if (res.status === "success") {
-      for (const key in columns) {
-        if (columns.hasOwnProperty(key)) {
-          const index = parseInt(key);
-          colArr[index] = columns[key];
+      if (res.status === "success") {
+        for (const key in columns) {
+          if (columns.hasOwnProperty(key)) {
+            const index = parseInt(key);
+            colArr[index] = columns[key];
+          }
         }
+
+        const found = colArr.findIndex((e) => e._id === hId);
+        colArr[found].headerName = hName;
+        setColumns(colArr);
+      } else {
+        // popup modal
+      }
+      setLoading(false);
+    };
+
+    const handleCreateColumn = async (props) => {
+      setLoading(true);
+      setOpenModal(false);
+
+      try {
+        const res = await fetch(`../api/tables/field`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fields: {
+              tableId: "",
+              headerName: props.data.fieldLabel,
+              dataKey: props.data.dataKey,
+              cellType: props.type,
+              cellName: props.data.fieldLabel,
+              editableCol: true,
+            },
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(res.status);
+        }
+
+        const data = await res.json();
+      } catch (error) {
+        console.log(`error creating column`);
       }
 
-      const found = colArr.findIndex((e) => e._id === hId);
-      colArr[found].headerName = hName;
-      setColumns(colArr);
-    } else {
-      // popup modal
-    }
-    setLoading(false);
-  };
-
-  const handleCreateColumn = async (props) => {
-    setLoading(true);
-    setOpenModal(false);
-
-    try {
-      const res = await fetch(`../api/tables/field`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tableId: "",
-          headerName: props.data.fieldLabel,
-          dataKey: props.data.dataKey,
-          cellType: props.type,
+      setColumns([
+        ...columns,
+        {
           cellName: props.data.fieldLabel,
-        }),
+          cellType: props.type,
+          dataKey: props.data.dataKey,
+          headerName: props.data.fieldLabel,
+          resizeable: false,
+          editableCol: true,
+        },
+      ]);
+      setOpenModal(false);
+      setLoading(false);
+    };
+
+    const handleColEdit = async (id) => {
+      const nextData = Object.assign([], tableData);
+      const activeItem = nextData.find((item) => item.id === id);
+      activeItem.status = activeItem.status ? null : "EDIT";
+    };
+
+    const handleExpanded = (rowData, dataKey) => {
+      let open = false;
+      const nextExpandedRowKeys = [];
+
+      expandedRowKey.forEach((key) => {
+        if (key == rowData[rowKey]) {
+          open = true;
+        } else {
+          nextExpandedRowKeys.push(key);
+        }
       });
 
-      if (!res.ok) {
-        throw new Error(res.status);
+      if (!open) {
+        nextExpandedRowKeys.push(rowData[rowKey]);
       }
 
-      const data = await res.json();
-    } catch (error) {
-      console.log(`error creating column`);
-    }
+      setExpandedRowKeys(nextExpandedRowKeys);
+    };
 
-    setColumns([
-      ...columns,
-      {
-        cellName: props.data.fieldLabel,
-        cellType: props.type,
-        dataKey: props.data.dataKey,
-        headerName: props.data.fieldLabel,
-        resizeable: false,
-      },
-    ]);
-    setOpenModal(false);
-    setLoading(false);
-  };
-
-  const handleColEdit = async (id) => {
-    const nextData = Object.assign([], data);
-    const activeItem = nextData.find((item) => item.id === id);
-    activeItem.status = activeItem.status ? null : "EDIT";
-  };
-
-  const handleExpanded = (rowData, dataKey) => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKey.forEach((key) => {
-      if (key == rowData[rowKey]) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData[rowKey]);
-    }
-
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  return (
-    <div className="mx-auto my-4">
-      <Table
-        data={data}
-        headerHeight={84}
-        rowHeight={80}
-        height={600} //need to calculate height when expanded
-        bordered
-        fillHeight
-        expandedRowKeys={expandedRowKey}
-        rowExpandedHeight={data.length * 80} // replace with expanded data
-        rowKey={rowKey}
-        renderRowExpanded={(data) => {
-          if (data.no === 0) {
-            return <ExpandedRenderer />;
-          }
-          return (
-            <div className="flex w-full h-full">
-              <div className="m-auto text-center">
-                <div className="tracking-wide text-red-600">
-                  Cannot retrieve expandable content or is empty.
-                </div>
-                <div className="mt-2 text-sm">
-                  <Link href={"/"}>Assign Expandable Content</Link> or{" "}
-                  <Link href={"/"}>refetch</Link>.
+    return (
+      <div className="mx-auto my-4">
+        <Table
+          data={tableData.data}
+          headerHeight={84}
+          rowHeight={80}
+          height={600} //need to calculate height when expanded
+          bordered
+          fillHeight
+          expandedRowKeys={expandedRowKey}
+          rowExpandedHeight={tableData.length * 80} // replace with expanded data
+          rowKey={rowKey}
+          renderRowExpanded={(data) => {
+            if (data.no === 0) {
+              return <ExpandedRenderer />;
+            }
+            return (
+              <div className="flex w-full h-full">
+                <div className="m-auto text-center">
+                  <div className="tracking-wide text-red-600">
+                    Cannot retrieve expandable content or is empty.
+                  </div>
+                  <div className="mt-2 text-sm">
+                    <Link href={"/"}>Assign Expandable Content</Link> or{" "}
+                    <Link href={"/"}>refetch</Link>.
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        }}
-        style={{ border: "2px solid #2626af" }}
-        className="max-w-full mx-4 text-lg font-semibold shadow-sm select-none shadow-gray-500/50 rounded-2xl "
-        loading={loading}
-      >
-        <Column width={200} fixed align="center">
-          <HeaderCell>#</HeaderCell>
-          <ExpandCell
-            dataKey="pId"
-            expandedRowKeys={expandedRowKey}
-            onChange={handleExpanded}
-          />
-        </Column>
-        {renderColumns()}
-        <Column align="center" width={200}>
-          <HeaderCell>
-            <IconButton
-              onClick={() => {
-                setOpenModal(true);
-              }}
-              icon={<PlusIcon />}
-            >
-              New Column
-            </IconButton>
-          </HeaderCell>
-          <ActionCell dataKey={"id"} onClick={handleColEdit} />
-        </Column>
-      </Table>
-      <NewColModal
-        open={openModal}
-        onClose={setOpenModal}
-        handleCreate={handleCreateColumn}
-      />
-      <EditModal
-        open={editOpen}
-        refField={editRef}
-        onClose={setEditOpen}
-        handleEdit={handleHeaderEdit}
-      />
-      <ConfirmationPopup
-        open={confOpen}
-        header={confHeader || ""}
-        text={confText || ""}
-        onClose={setConfOpen}
-        execFunc={confFunc}
-      />
-    </div>
-  );
+            );
+          }}
+          style={{ border: "2px solid #2626af" }}
+          className="max-w-full mx-4 text-lg font-semibold shadow-sm select-none shadow-gray-500/50 rounded-2xl "
+          loading={loading}
+        >
+          <Column width={200} fixed align="center">
+            <HeaderCell>#</HeaderCell>
+            <ExpandCell
+              dataKey="pId"
+              expandedRowKeys={expandedRowKey}
+              onChange={handleExpanded}
+            />
+          </Column>
+          {renderColumns()}
+          <Column align="center" width={200}>
+            <HeaderCell>
+              <IconButton
+                onClick={() => {
+                  setOpenModal(true);
+                }}
+                icon={<PlusIcon />}
+              >
+                New Column
+              </IconButton>
+            </HeaderCell>
+            <ActionCell dataKey={"id"} onClick={handleColEdit} />
+          </Column>
+        </Table>
+        <NewColModal
+          open={openModal}
+          onClose={setOpenModal}
+          handleCreate={handleCreateColumn}
+        />
+        <EditModal
+          open={editOpen}
+          refField={editRef}
+          onClose={setEditOpen}
+          handleEdit={handleHeaderEdit}
+        />
+        <ConfirmationPopup
+          open={confOpen}
+          header={confHeader || ""}
+          text={confText || ""}
+          onClose={setConfOpen}
+          execFunc={confFunc}
+        />
+      </div>
+    );
+  }
 };
 
 export default TableRenderer;
