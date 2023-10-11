@@ -8,7 +8,9 @@ var mongoose = require("mongoose");
 export async function getTableFields() {
   await dbConnect();
 
-  const tableField = await TableSchema.find().populate({
+  const tableField = await TableSchema.findOne({
+    _id: "64f63fbc2dcbb4e3ad750230",
+  }).populate({
     path: "tablefields",
     model: TableField,
     options: { path: "tablefields" },
@@ -18,7 +20,7 @@ export async function getTableFields() {
     return "undefined";
   }
 
-  return tableField;
+  return tableField.tablefields;
 }
 
 export async function getDDPools(id) {
@@ -42,17 +44,21 @@ export async function getDDPools(id) {
 export async function getTableData({ limit = 50 }) {
   await dbConnect();
 
-  const data = await TableSchema.find().populate({
-    path: "data",
-    model: Data,
-    options: { path: "data", limit: limit },
-  });
+  const data = await TableSchema.findOne({ _id: "64f63fbc2dcbb4e3ad750230" })
+    .populate({
+      path: "data",
+      model: Data,
+      options: { path: "data", limit: limit },
+    })
+    .select({
+      data: 1,
+    });
 
   if (!data) {
     return "undefined";
   }
 
-  return data;
+  return data.data;
 }
 
 export async function createColumn({ tableId, fields }) {
