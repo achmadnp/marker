@@ -10,8 +10,8 @@ import { CiLogout } from "react-icons/ci";
 import { RxDashboard } from "react-icons/rx";
 import { signOut } from "next-auth/react";
 
-const Sidebar = ({ withButton = true }) => {
-  const [open, setOpen] = useState(true);
+const Sidebar = ({ withButton = true, isOpen = false }) => {
+  const [open, setOpen] = useState(isOpen);
 
   const menus = [
     { title: "Dashboard", icon: <RxDashboard /> },
