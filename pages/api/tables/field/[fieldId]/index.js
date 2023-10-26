@@ -34,7 +34,6 @@ export default nextConnect(ncOpts)
       tableId: `64f63fbc2dcbb4e3ad750230`,
       fieldId: req.query.fieldId,
     });
-    console.log(`deleted, ${deleted}`);
     if (deleted.length != 0) {
       return res.status(200).json({
         operation: "DELETE",

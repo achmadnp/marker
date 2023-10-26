@@ -10,12 +10,7 @@ export default nextConnect(ncOpts)
   .get(async (req, res) => {
     const fields = await getTableFields();
     if (fields) {
-      return res.status(200).json({
-        operation: "GET",
-        status: "success",
-        message: "fields has been successfully fetched",
-        fields: fields,
-      });
+      return res.status(200).json(fields);
     } else {
       return res
         .status(400)
@@ -46,7 +41,7 @@ export default nextConnect(ncOpts)
   })
   .put(async (req, res) => {
     const empty = await emptyFieldData({ fieldId: req.body.fieldId });
-    console.log(`deleted, ${empty}`);
+    console.log(`emptied, ${empty}`);
     if (empty.length != 0) {
       return res.status(200).json({
         operation: "PUT",
