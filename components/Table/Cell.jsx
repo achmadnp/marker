@@ -11,8 +11,12 @@ import { InputText } from "primereact/inputtext";
 import { ColorPicker } from "primereact/colorpicker";
 import { classNames } from "primereact/utils";
 
-export const ButtonCell = () => {
-  return <button onClick={() => alert("Button Clicked")}>Click Me</button>;
+export const ButtonCell = ({ onClick, text }) => {
+  return (
+    <button className="p-1 border rounded border-slate-300" onClick={onClick}>
+      {text}
+    </button>
+  );
 };
 
 export const ImageCell = () => {};
