@@ -4,7 +4,7 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
     "./page-components/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/flowbite-react/**/*.js",
+    // "./node_modules/primereact/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -13,6 +13,7 @@ module.exports = {
         blink: "blink 1s cubic-bezier(0, 0, 0.2, 1) infinite",
         fadeIn1s: "fadeIn 1s ease-in-out forwards",
         pulsingBorder: "pulsingBorder 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        bounceReduced: "bounceReduce 1s cubic-bezier(0.8, 0, 1, 1) infinite",
       },
       keyframes: {
         fadeIn: {
@@ -28,6 +29,10 @@ module.exports = {
           "0%": { borderWidth: "1px" },
           "50%": { borderWidth: "3px" },
           "100%": { borderWidth: "1px" },
+        },
+        bounceReduce: {
+          "0%, 100%": { transform: "translateY(10%)" },
+          "50%": { translateY: "0%" },
         },
       },
       transitionProperty: {
