@@ -80,10 +80,6 @@ export async function pushActivityUser({ activityId, userId }) {
 export async function pullActivityUser({ activity, username, executor }) {
   await dbConnect();
 
-  console.log(
-    `activityId: ${activity}, username: ${username}, executor: ${executor} `
-  );
-
   try {
     const activityToUser = await Users.findOneAndUpdate(
       {
@@ -103,8 +99,6 @@ export async function pullActivityUser({ activity, username, executor }) {
       }
     );
 
-    console.log(`activityToUser: ${activityToUser}`);
-
     const userToActivity = await TableSchema.findOneAndUpdate(
       { _id: activity },
       {
@@ -117,8 +111,6 @@ export async function pullActivityUser({ activity, username, executor }) {
         new: true,
       }
     );
-
-    console.log(`userToActivity: ${userToActivity}`);
 
     if (activityToUser && userToActivity) {
       await new ActivityLog({
