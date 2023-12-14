@@ -1,17 +1,16 @@
-import { modifySelectCellOption } from "@/api-lib/db/fields";
+import { modifySelectCellOption } from "@/api-lib/db/table/fields";
 import { ncOpts } from "@/api-lib/nc";
 import nextConnect from "next-connect";
 
 export default nextConnect(ncOpts)
   .get(async (req, res) => {})
   .put(async (req, res) => {
-    // maybe switch case to other opt?
-
     const insert = await modifySelectCellOption(
       req.query.fieldId,
       req.body.optValue,
       req.body.optColor,
-      req.body.operation
+      req.body.operation,
+      req.body.user
     );
 
     if (insert) {
