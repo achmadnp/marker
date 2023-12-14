@@ -1,6 +1,8 @@
+import { fetcher } from "@/lib/fetcher";
 import { LatestLogs } from "./section/LatestLogs";
 import { NotePopup } from "./section/NoteSection";
 import { ProjectOverview } from "./section/ProjectOverview";
+import useSWR from "swr";
 
 export const Dashboard = (props) => {
   // current organization
@@ -8,8 +10,13 @@ export const Dashboard = (props) => {
   // orga member
   // total project
 
-  const data = props.data;
-  const fields = props.fields;
+  const session = props.session;
+
+  const {
+    data: projectData,
+    error,
+    isLoading,
+  } = useSWR(`/api/users/${session.userId}/activities/overview`, fetcher);
 
   const logs = [
     {
@@ -29,7 +36,10 @@ export const Dashboard = (props) => {
   return (
     <div className="w-full">
       <NotePopup />
-      <ProjectOverview data={data} fields={fields} />
+      <ProjectOverview
+        data={projectData && projectData.activities}
+        uid={session.userId}
+      />
       <LatestLogs latestLogs={logs} />
     </div>
   );
