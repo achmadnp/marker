@@ -13,14 +13,10 @@ import "rsuite/dist/rsuite.css";
 import PlusIcon from "@rsuite/icons/Plus";
 import {
   AsigneeCell,
-  DTPCell,
   DTRangeCell,
   DropdownCell,
   ExpandCell,
-  HeaderPopover,
-  InputCell,
   ProgressCell,
-  SingleAsignee,
 } from "@/components/Table/Cells";
 import Link from "next/link";
 import ExpandedRenderer from "./ExpandedRenderer";
