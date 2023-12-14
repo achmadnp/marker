@@ -3,27 +3,32 @@ import { useState } from "react";
 import { IconContext } from "react-icons";
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from "react-icons/hi";
 import { AiOutlineProject } from "react-icons/ai";
+import { FcInvite } from "react-icons/fc";
 import { MdManageAccounts } from "react-icons/md";
 import { BsInbox, BsListTask } from "react-icons/bs";
 import { CiLogout } from "react-icons/ci";
 
 import { RxDashboard } from "react-icons/rx";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/router";
 
 const Sidebar = ({ withButton = true, isOpen = false }) => {
   const [open, setOpen] = useState(isOpen);
+  const router = useRouter();
 
   const menus = [
-    { title: "Dashboard", icon: <RxDashboard /> },
-    { title: "Projects", icon: <AiOutlineProject /> },
-    { title: "Calendar View", icon: <BsListTask /> },
-    {
-      title: "Accounts",
-      icon: <MdManageAccounts />,
+    { title: "Dashboard", icon: <RxDashboard />, href: "/" },
+    { title: "Activities", icon: <AiOutlineProject />, href: "/activities" },
+    { title: "Invitation", icon: <FcInvite />, href: "/invitation" },
 
+    // { title: "Calendar View", icon: <BsListTask />, href: "/" },
+    {
+      title: "Profile",
+      icon: <MdManageAccounts />,
+      href: "/profile",
       gap: true,
     },
-    { title: "Logs", icon: <BsInbox /> },
+    { title: "Inbox", icon: <BsInbox />, href: "/inbox", gap: true },
   ];
 
   return (
@@ -31,7 +36,7 @@ const Sidebar = ({ withButton = true, isOpen = false }) => {
       <div
         className={` ${
           open ? "w-72" : "w-20 "
-        } bg-[url('/imgs/assets/sidebarbg.jpg')] h-full hidden sm:block bg-cover shadow-2xl shadow-[#fff] min-h-screen p-5 pt-8 relative duration-500`}
+        } bg-[url('/imgs/assets/sidebarbg.jpg')] h-full hidden sm:block bg-cover shadow-2xl shadow-[#fff] min-h-screen p-5 pt-8 relative duration-1000`}
       >
         {withButton && (
           <HiChevronDoubleLeft
@@ -44,28 +49,29 @@ const Sidebar = ({ withButton = true, isOpen = false }) => {
         )}
 
         <div
-          className={`${open ? "block" : "hidden"} flex items-center gap-x-4 `}
+          className={`${
+            open ? "w-full" : "w-10"
+          } flex items-center gap-x-4 duration-1000  `}
         >
-          <img
-            src="/imgs/assets/logo.png"
-            className={`cursor-pointer duration-500 `}
-          />
+          <img src="/imgs/assets/logo.png" className={`cursor-pointer `} />
         </div>
         <ul className="pt-6 tracking-wider bg-inherit">
           {menus.map((menu, i) => (
             <li
               key={i}
-              className={`flex backdrop-blur-sm rounded-md my-5 p-2 font-semibold  cursor-pointer duration-300 border ease-linear bg-slate-200/5 hover:border-2 hover:border-blue-300 text-gray-300 items-center gap-x-4 hover:bg-blue-400/30
+              className={`backdrop-blur-sm rounded-md my-5  font-semibold  cursor-pointer duration-300 border ease-linear bg-slate-200/5 hover:border-2 hover:border-blue-300 text-gray-300 items-center  hover:bg-blue-400/30
               ${menu.gap ? "mt-9" : "mt-2"} `}
             >
-              <div>{menu.icon}</div>
-              <span
-                className={`${
-                  !open && "hidden"
-                } origin-left duration-200 overflow-hidden`}
-              >
-                {menu.title}
-              </span>
+              <Link className="flex p-2 gap-x-4" href={menu.href}>
+                <div className="m-1">{menu.icon}</div>
+                <span
+                  className={`${
+                    !open && "hidden"
+                  } origin-left duration-200 overflow-hidden`}
+                >
+                  {menu.title}
+                </span>
+              </Link>
             </li>
           ))}
           <li
