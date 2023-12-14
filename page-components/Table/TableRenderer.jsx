@@ -31,8 +31,10 @@ import {
   handleEditCell,
 } from "@/lib/util/functions/data/data";
 import { modifySelectCellOption } from "@/lib/util/functions/tables/fields";
+import { assignLog } from "@/lib/util/functions/log";
 
-export const TableRenderer = ({ ...props }) => {
+export const TableRenderer = ({ activityId, session }) => {
+  const currentUser = session.userId;
   const toast = useRef(null);
   const cm = useRef(null);
   const headerExt = useRef([]);
@@ -47,20 +49,20 @@ export const TableRenderer = ({ ...props }) => {
     error: errData,
     isLoading: loadingData,
     mutate: mutateData,
-  } = useSWR(`/api/activity`, fetcher);
+  } = useSWR(`/api/activity/${activityId}/data`, fetcher);
 
   const {
     data: tableFields,
     error: errFields,
     isLoading: loadingFields,
     mutate: mutateFields,
-  } = useSWR(`/api/tables/field`, fetcher);
+  } = useSWR(`/api/tables/field/${activityId}`, fetcher);
 
   const {
     data: userData,
     error: errUser,
     isLoading: loadingUser,
-  } = useSWR(`/api/tables/users`, fetcher);
+  } = useSWR(`/api/activity/${activityId}/users`, fetcher);
 
   if (errData || errFields) {
     return <div>ERROR</div>;
@@ -153,6 +155,8 @@ export const TableRenderer = ({ ...props }) => {
   };
 
   const onRowExpand = (event) => {
+    // maybe SWR here?
+    console.log(event);
     toast.current.show({
       severity: "info",
       summary: "Product Expanded",
@@ -173,7 +177,23 @@ export const TableRenderer = ({ ...props }) => {
   const rowExpansionTemplate = (data) => {
     return (
       <div className="p-3">
-        <h5>Orders for {data.name}</h5>
+        <div className="flex w-full h-full">
+          <div className="m-auto text-center">
+            <div className="tracking-wide text-red-600">
+              Cannot retrieve expandable content or is empty.
+            </div>
+            <div className="mt-2 text-sm">
+              <button
+                onClick={() => {
+                  handleAssignExpanded(data);
+                }}
+                className="italic text-blue-600 underline"
+              >
+                Assign Expandable Content
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -182,27 +202,31 @@ export const TableRenderer = ({ ...props }) => {
     return true;
   };
 
-  // mutate SWR
+  const handleAssignExpanded = (data) => {
+    console.log(data);
+  };
+
   const onCellEditComplete = async (e) => {
-    setIsLoading(true);
+    // setIsLoading(true);
     let { rowData, newValue, field, originalEvent: event } = e;
     if (
-      newValue instanceof String &&
+      typeof newValue === "string" &&
       newValue?.trim().length > 0 &&
       newValue !== rowData[field]
     ) {
       rowData[field] = newValue;
-      const res = await handleEditCell(rowData);
+      const res = await handleEditCell(activityId, rowData, currentUser);
+
       if (res.ok) {
-        mutate("/api/activity");
+        mutate(`/api/activity/${activityId}/data`);
       } else {
         rowData[field] = "";
       }
     } else if (newValue instanceof Date) {
       rowData[field] = newValue;
-      const res = await handleEditCell(rowData);
+      const res = await handleEditCell(activityId, rowData, currentUser);
       if (res.ok) {
-        mutate("/api/activity");
+        mutate(`/api/activity/${activityId}/data`);
       } else {
         rowData[field] = "";
       }
@@ -211,7 +235,7 @@ export const TableRenderer = ({ ...props }) => {
     } else {
       event.preventDefault();
     }
-    setIsLoading(false);
+    // setIsLoading(false);
   };
 
   const cellEditor = (options) => {
@@ -228,10 +252,14 @@ export const TableRenderer = ({ ...props }) => {
     if (header) {
       setIsLoading(true);
 
-      const res = await handleColumnHeaderEdit(e.item.data.id, header);
+      const res = await handleColumnHeaderEdit(
+        e.item.data.id,
+        header,
+        currentUser
+      );
 
       if (res.status === "success") {
-        mutate("/api/tables/field");
+        mutate(`/api/tables/field/${activityId}`);
         toast.current.show({
           severity: "success",
           summary: `Sucess`,
@@ -253,10 +281,14 @@ export const TableRenderer = ({ ...props }) => {
 
   const handleDeleteColumn = async (e) => {
     setIsLoading(true);
-    const res = await handleColumnDelete(e.item.data.id);
+    const res = await handleColumnDelete(
+      e.item.data.id,
+      activityId,
+      currentUser
+    );
 
     if (res.status === "success") {
-      mutate("/api/tables/field");
+      mutate(`/api/tables/field/${activityId}`);
       toast.current.show({
         severity: "success",
         summary: "Column Deleted",
@@ -299,17 +331,17 @@ export const TableRenderer = ({ ...props }) => {
     setIsLoading(false);
   };
 
-  // this
   const handleInsertSelectOpt = async (value, color, data, fieldId) => {
     const res = await modifySelectCellOption({
       optValue: value,
       optColor: color,
       fieldId,
       operation: "push",
+      user: currentUser,
     });
 
     if (res.ok) {
-      mutate("/api/tables/field");
+      mutate(`/api/tables/field/${activityId}`);
     } else {
       toast.current.show({
         severity: "error",
@@ -327,9 +359,10 @@ export const TableRenderer = ({ ...props }) => {
       optColor: color,
       fieldId,
       operation: "pull",
+      user: currentUser,
     });
     if (res.ok) {
-      mutate("/api/tables/field");
+      mutate(`/api/tables/field/${activityId}`);
     } else {
       toast.current.show({
         severity: "error",
@@ -342,10 +375,10 @@ export const TableRenderer = ({ ...props }) => {
 
   // this
   const handleSelectCell = async (data) => {
-    const res = await handleEditCell(data);
+    const res = await handleEditCell(activityId, data, currentUser);
 
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -358,9 +391,9 @@ export const TableRenderer = ({ ...props }) => {
 
   // this
   const handleAssignMulti = async (rowData) => {
-    const res = await handleEditCell(rowData);
+    const res = await handleEditCell(activityId, rowData);
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -373,9 +406,9 @@ export const TableRenderer = ({ ...props }) => {
 
   // should be same as above
   const handleUnassignMulti = async (rowData) => {
-    const res = await handleEditCell(rowData);
+    const res = await handleEditCell(activityId, rowData, currentUser);
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -402,9 +435,9 @@ export const TableRenderer = ({ ...props }) => {
 
   // should be same as above
   const handleChangeSinglePerson = async (rowData) => {
-    const res = await handleEditCell(rowData);
+    const res = await handleEditCell(activityId, rowData, currentUser);
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -417,9 +450,9 @@ export const TableRenderer = ({ ...props }) => {
 
   // should be same as above
   const handleDTPChange = async (rowData) => {
-    const res = await handleEditCell(rowData);
+    const res = await handleEditCell(activityId, rowData, currentUser);
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -432,10 +465,9 @@ export const TableRenderer = ({ ...props }) => {
 
   // should be same as above
   const handleDTRangeChange = async (rowData) => {
-    console.log(rowData);
-    const res = await handleEditCell(rowData);
+    const res = await handleEditCell(activityId, rowData, currentUser);
     if (res.ok) {
-      mutate("/api/activity");
+      mutate(`/api/activity/${activityId}/data`);
     } else {
       toast.current.show({
         severity: "error",
@@ -702,7 +734,7 @@ export const TableRenderer = ({ ...props }) => {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`../api/tables/field`, {
+      const res = await fetch(`../api/tables/field/${activityId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -716,6 +748,7 @@ export const TableRenderer = ({ ...props }) => {
             cellName: fields.columnName,
             editableCol: true,
           },
+          userId: currentUser,
         }),
       });
 
@@ -737,7 +770,7 @@ export const TableRenderer = ({ ...props }) => {
         life: 3000,
       });
     }
-    mutate("/api/tables/field");
+    mutate(`/api/tables/field/${activityId}`);
     setIsLoading(false);
   };
 
@@ -761,9 +794,15 @@ export const TableRenderer = ({ ...props }) => {
 
   const deleteRow = async (data) => {
     setIsLoading(true);
-    const res = await handleDeleteRow(data);
+    const res = await handleDeleteRow(activityId, data);
 
     if (res.ok) {
+      await assignLog(
+        activityId,
+        currentUser,
+        data._id,
+        `user %user% removed row on activity %activity%`
+      );
       toast.current.show({
         severity: "success",
         summary: "ROW DELETED",
@@ -778,7 +817,7 @@ export const TableRenderer = ({ ...props }) => {
         life: 1000,
       });
     }
-    mutate("/api/activity");
+    mutate(`/api/activity/${activityId}/data`);
     setIsLoading(false);
   };
 
@@ -797,7 +836,11 @@ export const TableRenderer = ({ ...props }) => {
     tableFields.map((field) => {
       colKeys.push(field.dataKey);
     });
-    const res = await handleCreateData({ colKeys });
+    const res = await handleCreateData({
+      colKeys,
+      actId: activityId,
+      userId: currentUser,
+    });
     if (res.ok) {
       toast.current.show({
         severity: "success",
@@ -813,7 +856,7 @@ export const TableRenderer = ({ ...props }) => {
         life: 1000,
       });
     }
-    mutate("/api/activity");
+    mutate(`/api/activity/${activityId}/data`);
     setIsLoading(false);
   };
 
@@ -823,7 +866,7 @@ export const TableRenderer = ({ ...props }) => {
     });
 
     return (
-      <div className="p-5 border border-white max-w-[95%] mx-auto">
+      <div className="p-5  max-w-[95%] mx-auto">
         <Toast ref={toast} />
         <ContextMenu
           model={contextMenuModel}
@@ -846,6 +889,7 @@ export const TableRenderer = ({ ...props }) => {
           onRowCollapse={onRowCollapse}
           rowExpansionTemplate={rowExpansionTemplate}
           dataKey="id"
+          className="rounded-lg"
           tableStyle={{ minWidth: "60rem" }}
         >
           <Column expander={allowExpansion} style={{ width: "5rem" }} />
@@ -862,6 +906,7 @@ export const TableRenderer = ({ ...props }) => {
             }
           )}
           <Column
+            className="w-[150px] h-full cursor-pointer"
             header={
               <ButtonCell
                 text={"+ Column"}
