@@ -52,9 +52,10 @@ export const authOpt = {
     },
 
     session: async ({ session, token }) => {
-      //   if (session) {
-      // session.userRole = token.user.role;
-      //   }
+      if (session) {
+        session.username = token.user.username;
+        session.userId = token.user._id;
+      }
 
       return Promise.resolve(session);
     },
