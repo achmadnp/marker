@@ -11,9 +11,12 @@ import { InputText } from "primereact/inputtext";
 import { ColorPicker } from "primereact/colorpicker";
 import { classNames } from "primereact/utils";
 
-export const ButtonCell = ({ onClick, text }) => {
+export const ButtonCell = ({ onClick, text, cn }) => {
   return (
-    <button className="p-1 border rounded border-slate-300" onClick={onClick}>
+    <button
+      className={`p-1 border rounded border-slate-300 ${cn}`}
+      onClick={onClick}
+    >
       {text}
     </button>
   );
@@ -383,7 +386,6 @@ export const MultipleAvatarCell = ({
     if (data[dataKey] instanceof Array) {
       if (data[dataKey].includes(user.id)) {
         e.preventDefault();
-        console.log("already assigned");
       } else {
         data[dataKey] = [...data[dataKey], user.id];
         onAssign(data);
@@ -399,7 +401,6 @@ export const MultipleAvatarCell = ({
     if (data[dataKey] instanceof Array) {
       if (data[dataKey].includes(user.id)) {
         data[dataKey] = data[dataKey].filter((id) => id !== user.id);
-        console.log(data);
         onUnassign(data);
       } else {
         console.log("not assigned");
