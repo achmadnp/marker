@@ -5,6 +5,7 @@ import Data from "@/lib/model/Data/DataModel";
 import TaskTable from "@/lib/model/Tables/TaskTableModel";
 import mongoose from "mongoose";
 
+// To table/expanded
 export async function getExpandedFields({ tableId }) {
   await dbConnect();
 
@@ -21,6 +22,7 @@ export async function getExpandedFields({ tableId }) {
   return data;
 }
 
+// To table/expanded (existed)
 export async function getExpandedData({ tableId, limit = 50 }) {
   await dbConnect();
 
@@ -37,6 +39,7 @@ export async function getExpandedData({ tableId, limit = 50 }) {
   return data;
 }
 
+// To table/expanded
 export async function assignExpanded({ dataId }) {
   await dbConnect();
   let taskTableId;
